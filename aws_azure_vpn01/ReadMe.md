@@ -4,6 +4,12 @@
 https://addache.net/aws_azure_vpn01/  
 で紹介している **AWS Site-to-Site VPN と Azure 側 Linux VM（LibreSwan）を用いた IPsec VPN 構成** の補助資産です。
 
+## 検証環境
+
+- Azure Linux VM (RHEL 9.4)
+- LibreSwan: 検証時点のディストリビューション標準パッケージ
+
+
 ## 対象読者
 
 - AWS / Azure の基本的なネットワーク構成を理解している方
@@ -66,4 +72,4 @@ LibreSwan 用の IPsec 設定テンプレートです。
 
 - 本リポジトリの内容は無保証です
 - 利用によって生じた問題について、作者は責任を負いません
-
+- 本リポジトリでは、コマンド手順や操作ログは含めていません（ブログ側に記載しています）
