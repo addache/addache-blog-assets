@@ -7,17 +7,20 @@
 記事を読まずに辿り着いた方は、
 まずブログ記事の方を読むことをおすすめします。
 
-## まず見るもの（コピペ用）
+### 🔗 便利なリンク
 
-- posts.txt  
+- posts.txt（raw）  
   → [投稿URL一覧](https://raw.githubusercontent.com/addache/addache-blog-assets/refs/heads/main/github-post-1/posts.txt)
 
-- bot.py  
+- bot.py（raw）  
   → [投稿処理本体](https://raw.githubusercontent.com/addache/addache-blog-assets/refs/heads/main/github-post-1/bot.py)
   
-- .github/workflows/*.yml  
+- ワークフロー定義（raw） 
   → [GitHub Actions 定期実行設定](https://raw.githubusercontent.com/addache/addache-blog-assets/refs/heads/main/github-post-1/post.yml)
 
+※ この README はブラウザでマークダウンとして表示されます。
+   必要に応じて raw 表示で確認してください。
+   
 ## 解説・手順はこちら
 
 実際の作成手順、X Developer の設定、
