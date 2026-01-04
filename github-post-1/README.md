@@ -15,7 +15,7 @@
 - bot.py（raw）  
   → [投稿処理本体](https://raw.githubusercontent.com/addache/addache-blog-assets/refs/heads/main/github-post-1/bot.py)
   
-- ワークフロー定義（raw） 
+- ワークフロー定義（raw）
   → [GitHub Actions 定期実行設定](https://raw.githubusercontent.com/addache/addache-blog-assets/refs/heads/main/github-post-1/post.yml)
 
 ※ この README はブラウザでマークダウンとして表示されます。
