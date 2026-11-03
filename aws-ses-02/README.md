@@ -1,11 +1,12 @@
-# aws-ses-02：記事掲載用JSON
+# aws-ses-02：記事掲載用コード・JSON
 
 対応記事：https://addache.net/aws-ses-02/
 
-各JSONを開き、コード欄のコピーボタンでコピーして、記事で指定したCloudShell上のファイルへ貼り付けてください。記事のnano、sed、AWS CLIの実行順は変わりません。
+各ファイルを開き、コード欄のコピーボタンでコピーして、記事で指定したCloudShell上のファイルへ貼り付けてください。記事のnano、sed、AWS CLIの実行順は変わりません。
 
 | ファイル | CloudShellで保存する名前 |
 |---|---|
+| lambda_function.py | lambda_function.py |
 | lambda-trust-policy.json | lambda-trust-policy.json |
 | lambda-environment.example.json | lambda-environment.json |
 | s3-lifecycle.json | s3-lifecycle.json |
