@@ -1,0 +1,14 @@
+{
+  "Rules": [
+    {
+      "ID": "ses-reception-email",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "Expiration": {
+        "Days": 3
+      }
+    }
+  ]
+}
