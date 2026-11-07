@@ -57,3 +57,15 @@ bash setup.sh
 
 参考：[ロールの定義](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/security)、[Key VaultのRBAC](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide)、[Consumptionワークフロー作成API](https://learn.microsoft.com/en-us/rest/api/logic/workflows/create-or-update?view=rest-logic-2019-05-01)、[履歴保存期間](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-limits-and-config)、[送信元IP制限](https://learn.microsoft.com/en-us/azure/logic-apps/set-up-security-permissions)、[HTTP URL取得API](https://learn.microsoft.com/en-us/rest/api/logic/workflow-triggers/list-callback-url?view=rest-logic-2016-06-01)。
 
+
+### サブスクリプションIDの確認
+
+`SUBSCRIPTION_ID` には「サブスクリプション TEST」などの表示名ではなく、ハイフンを含む36文字のIDを指定します。
+
+```bash
+az account list --query '[].{subscriptionName:name,subscriptionId:id}' --output table
+```
+
+`SubscriptionId` 列の値を `settings.local.sh` に設定してください。表形式では `id` という列名が省略されるため、`subscriptionId` へ名前を変えています。
+
+
