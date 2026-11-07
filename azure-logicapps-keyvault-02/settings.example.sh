@@ -1,9 +1,9 @@
 # Azure Cloud Shell / Bash. Edit only settings.local.sh.
 SUBSCRIPTION_ID='REPLACE_WITH_SUBSCRIPTION_ID'
 LOCATION='japaneast'
-RG_NAME='addache-keyvault02-rg'
-KV_NAME='REPLACE_WITH_UNIQUE_VAULT_NAME'
-LOGICAPP_NAME='lap-testsecrets-02'
+RG_NAME='Addache-Test'
+KV_NAME='key-testsecrets'
+LOGICAPP_NAME='Lap-TestSecrets'
 ALLOWED_IP_CIDR='REPLACE_WITH_HOME_PUBLIC_IPV4/32'
 RETENTION_DAYS=7
 
