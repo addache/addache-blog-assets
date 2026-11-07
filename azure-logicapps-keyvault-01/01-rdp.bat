@@ -28,9 +28,14 @@ REM Only a host name / IP address, optionally with a port, is accepted.
 powershell.exe -NoProfile -NonInteractive -Command "if ($env:RDP_HOST -notmatch '^[a-zA-Z0-9][a-zA-Z0-9.:-]*$') { exit 1 }"
 if errorlevel 1 goto Manual
 REM Do not overwrite or delete credentials that were already present.
-powershell.exe -NoProfile -NonInteractive -Command "$t='TERMSRV/'+$env:RDP_HOST; $r=@(& cmdkey.exe ('/list:'+$t)); if ($LASTEXITCODE -ne 0 -or ($r -join [Environment]::NewLine).IndexOf($t,[StringComparison]::OrdinalIgnoreCase) -ge 0) { exit 1 }" >nul 2>&1
-if errorlevel 1 (
-    echo Existing credentials found, or credential check failed. Using manual login.
+REM List all: /list:HOST repeats HOST in its header even when no entry exists.
+powershell.exe -NoProfile -NonInteractive -Command "$ErrorActionPreference='Stop'; try { $t='TERMSRV/'+$env:RDP_HOST; $r=@(& cmdkey.exe /list 2>$null); if ($LASTEXITCODE -ne 0) { exit 20 }; foreach ($line in $r) { if (([string]$line).TrimEnd().EndsWith($t,[StringComparison]::OrdinalIgnoreCase)) { exit 10 } }; exit 0 } catch { exit 20 }" >nul 2>&1
+if errorlevel 20 (
+    echo Credential lookup failed. Using manual login.
+    goto Manual
+)
+if errorlevel 10 (
+    echo Existing credentials found. They will be preserved. Using manual login.
     goto Manual
 )
 
