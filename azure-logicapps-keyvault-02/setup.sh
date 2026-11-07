@@ -124,6 +124,8 @@ CALLBACK_URL="$(az rest --method post \
   --query value --output tsv)"
 [[ "$CALLBACK_URL" == https://* && "$CALLBACK_URL" == *sig=* ]] || { echo 'Could not retrieve a signed callback URL.' >&2; exit 1; }
 printf '%s\n' "$CALLBACK_URL" > .generated/callback-url.txt
+# BAT source requires every percent sign to be doubled.
+sed -i 's/%/%%/g' .generated/callback-url.txt
 unset CALLBACK_URL
 chmod 600 .generated/callback-url.txt
 
@@ -131,7 +133,7 @@ chmod 600 .generated/callback-url.txt
 az rest --method get --url "$WORKFLOW_API" \
   --query '{resourceType:type,state:properties.state,identity:identity.type,allowedIPs:properties.accessControl.triggers.allowedCallerIpAddresses,retention:properties.runtimeConfiguration.lifetime.count}' \
   --output json
-echo 'Setup completed. The private callback URL is in .generated/callback-url.txt.'
+echo 'Setup completed. The private BAT-ready URL is in .generated/callback-url.txt.'
 echo 'Allow several minutes for the Logic App role assignment to take effect.'
 echo 'Test from the allowed Windows PC, not from Cloud Shell.'
 
