@@ -12,7 +12,8 @@
 |---|---|
 | [settings.example.sh](settings.example.sh) | 設定値のサンプル。私用の `settings.local.sh` へコピーして編集 |
 | [logic-app-resource.template.json](logic-app-resource.template.json) | Azure CLIの `az rest` からPUTするリソース作成リクエストのテンプレート |
-| [setup.sh](setup.sh) | Cloud ShellのBashから実行する構築スクリプト |
+| [setup.sh](setup.sh) | 任意の一括実行版。実行した場合は後続の構築作業は不要 |
+| [step-by-step.md](step-by-step.md) | 変数を読み込み、コマンドを順に実行する手順 |
 
 このJSONは02の `setup.sh` から使います。01のコードビュー用JSONとは外側の形式が異なります。
 
@@ -27,9 +28,13 @@ if [[ ! -f settings.local.sh ]]; then
 fi
 chmod 600 settings.local.sh
 code settings.local.sh
-# REPLACE_WITH... をすべて置換して保存後:
-bash setup.sh
+# REPLACE_WITH... をすべて置換して保存し、エディターを閉じてから:
+source ./settings.local.sh
 ```
+
+通常は [step-by-step.md](step-by-step.md) のコマンドを上から順に実行してください。`source ./settings.local.sh` は現在のBashに変数を読み込むだけで、Azureリソースは変更しません。`KV_ID`・`USER_ID`・`WORKFLOW_ID`・`WORKFLOW_API`・`PRINCIPAL_ID` は、それぞれの手順で取得します。
+
+まとめて実行する場合は `bash setup.sh` を使用できます。その場合、後続の構築作業は不要です。`bash setup.sh` 内の変数は、終了後のコマンド入力には残りません。
 
 `az`・`jq`・`sed` を使用します。Azureリソースを作成・更新し、料金が発生し得ます。検証はご自身のAzure環境で行ってください。
 
