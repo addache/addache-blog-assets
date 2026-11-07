@@ -1,4 +1,4 @@
-# azure-logicapps-keyvault-01：Windows BAT サンプル
+# azure-logicapps-keyvault-01：記事掲載用JSON・Windows BAT サンプル
 
 対応記事：https://addache.net/azure-logicapps-keyvault-01/
 
@@ -9,6 +9,18 @@ Azure Logic Apps **Consumption** の HTTP GET エンドポイント経由で、A
 | [01-rdp.bat](01-rdp.bat) | 接続先・ユーザー・パスワードを取得してRDP接続 |
 | [02-app-enabled.bat](02-app-enabled.bat) | ONのときだけ `hostname` を実行 |
 | [03-file-copy.bat](03-file-copy.bat) | 実際のデスクトップ上でフォルダ間コピー |
+
+## Logic AppsのワークフローJSON
+
+記事の「HTTPトリガーとアクションの作成」で使うコードビュー用JSONです。
+
+- [logic-app-workflow.template.json](logic-app-workflow.template.json)
+
+ファイル全体をコピーし、JSON内の `<KEY_VAULT_NAME>` をご自身のKey Vault名へ置き換えてから、Logic Apps Consumptionの「コード ビュー」へ貼り付けて保存してください。山括弧も含めて置換します。
+
+このJSONには、HTTP GETトリガー、マネージドIDでKey VaultへアクセスするHTTPアクション、シークレット値を返すResponseアクションが含まれます。アクション名や式は記事掲載の内容を維持しています。署名付きURLや実際のシークレット値は含みません。
+
+マネージドIDの有効化、Key Vaultの権限、送信元IP制限、シークレット登録は記事の手順で別途設定してください。貼り付け先はLogic Appsのコードビューです。
 
 ## ダウンロードと設定
 

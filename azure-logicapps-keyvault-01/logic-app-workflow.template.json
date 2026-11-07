@@ -1,0 +1,79 @@
+{
+  "definition": {
+    "metadata": {
+      "notes": {}
+    },
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "When_an_HTTP_request_is_received": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "method": "GET"
+        },
+        "conditions": []
+      }
+    },
+    "actions": {
+      "HTTP": {
+        "type": "Http",
+        "inputs": {
+          "uri": "@concat(\n  'https://<KEY_VAULT_NAME>.vault.azure.net/secrets/',\n  triggerOutputs()?['queries']?['secret_name'],\n  '?api-version=7.4'\n)",
+          "method": "GET",
+          "authentication": {
+            "type": "ManagedServiceIdentity",
+            "audience": "https://vault.azure.net"
+          },
+          "retryPolicy": {
+            "type": "none"
+          }
+        },
+        "runAfter": {},
+        "runtimeConfiguration": {
+          "contentTransfer": {
+            "transferMode": "Chunked"
+          },
+          "secureData": {
+            "properties": [
+              "outputs"
+            ]
+          }
+        }
+      },
+      "Response-MyHome": {
+        "type": "Response",
+        "kind": "Http",
+        "inputs": {
+          "statusCode": 200,
+          "body": "@body('HTTP')?['value']"
+        },
+        "runAfter": {
+          "HTTP": [
+            "Succeeded"
+          ]
+        },
+        "runtimeConfiguration": {
+          "secureData": {
+            "properties": [
+              "inputs"
+            ]
+          }
+        }
+      }
+    },
+    "outputs": {},
+    "parameters": {
+      "$connections": {
+        "type": "Object",
+        "defaultValue": {}
+      }
+    }
+  },
+  "parameters": {
+    "$connections": {
+      "type": "Object",
+      "value": {}
+    }
+  }
+}
