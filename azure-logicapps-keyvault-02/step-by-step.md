@@ -263,19 +263,26 @@ CALLBACK_URL="$(az rest --method post \
 
 if [[ "$CALLBACK_URL" == https://* && "$CALLBACK_URL" == *sig=* ]]; then
   printf '%s\n' "$CALLBACK_URL" > .generated/callback-url.txt
+  sed -i 's/%/%%/g' .generated/callback-url.txt
   chmod 600 .generated/callback-url.txt
-  echo 'HTTP URLを .generated/callback-url.txt に保存しました。'
+  echo 'BAT貼り付け用のHTTP URLを .generated/callback-url.txt に保存しました。'
 else
   echo 'HTTP URLを取得できませんでした。エラーを確認してください。'
 fi
 unset CALLBACK_URL
 ```
 
-取得した署名付きURLは `.generated/callback-url.txt` へ保存します。表示して控える場合は以下を実行します。
+取得した署名付きURLを `.generated/callback-url.txt` へ保存したあと、`sed` で `%` を `%%` に置き換えます。たとえば `%2F` は `%%2F` になります。
+
+表示した内容を、そのままBAT冒頭の `URI` へ貼り付けてください。**すでに変換済みなので、手動でさらに `%` を増やす必要はありません。**
 
 ```bash
 cat .generated/callback-url.txt
 ```
+
+TXT内はBATソースへの貼り付け用です。ブラウザーやcurlで直接呼ぶURLには、Azureから取得した未変換の値を使います。
+
+`sed` の行だけを繰り返すと `%` がさらに増えるため、やり直す場合はURL取得・TXTへの保存からまとめて再実行してください。
 
 このURLには認証用の署名が含まれています。URLを含む画面や、設定済みBATを公開しないでください。
 
