@@ -54,7 +54,7 @@ source ./settings.local.sh
 - Logic Appsは `Microsoft.Logic/workflows` として作成します。Standard用のApp Serviceプランは作成しません。Key Vaultの `--sku standard` はKey Vaultの価格レベルです。
 - `sed` で設定値を置換し、`jq` で履歴日数を数値へ変換します。シークレット値をJSONに埋め込みません。
 - シークレット登録は `--output none`。ただし値は私用設定ファイルや実行時の引数に平文で存在します。`--debug` や `bash -x` を使用せず、設定済みファイルを公開しないでください。
-- 取得した署名付きURLは `.generated/callback-url.txt` に保存します。`cat .generated/callback-url.txt` で確認できます。URLを含む画面も公開しないでください。
+- 取得した署名付きURLは `.generated/callback-url.txt` に保存し、`sed` で `%` を `%%` へ変換します。`cat .generated/callback-url.txt` の内容をそのままBATの `URI` へ貼り付けてください。追加の手動変換は不要です。TXTはBATソース用で、ブラウザーやcurlへ直接渡すURLではありません。URLを含む画面も公開しないでください。再変換を避けるため、やり直しはURLの取得・保存から実行します。
 - `settings.local.sh` と `.generated/` は `.gitignore` で除外します。実際の署名・シークレットをサンプルへ書き込まないでください。
 - 再実行すると同名リソースを更新し、シークレットは新しいバージョンとして登録します。削除処理は含めていません。
 - 読者のデータアクセスを最大約5分待ちます。Logic Appsの権限付与後は、反映を待ってから許可したWindows PCでテストしてください。
