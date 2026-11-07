@@ -1,4 +1,5 @@
 # Azure Cloud Shell / Bash. Edit only settings.local.sh.
+# Enter the subscription ID (GUID), not its display name.
 SUBSCRIPTION_ID='REPLACE_WITH_SUBSCRIPTION_ID'
 LOCATION='japaneast'
 RG_NAME='Addache-Test'
