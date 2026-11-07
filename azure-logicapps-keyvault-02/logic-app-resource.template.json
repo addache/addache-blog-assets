@@ -1,0 +1,102 @@
+{
+  "location": "__LOCATION__",
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "properties": {
+    "state": "Enabled",
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "triggers": {
+        "When_an_HTTP_request_is_received": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "method": "GET"
+          },
+          "conditions": []
+        }
+      },
+      "actions": {
+        "HTTP": {
+          "type": "Http",
+          "inputs": {
+            "uri": "@concat('https://__KEY_VAULT_NAME__.vault.azure.net/secrets/', triggerOutputs()?['queries']?['secret_name'], '?api-version=7.4')",
+            "method": "GET",
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://vault.azure.net"
+            },
+            "retryPolicy": {
+              "type": "none"
+            }
+          },
+          "runAfter": {},
+          "runtimeConfiguration": {
+            "contentTransfer": {
+              "transferMode": "Chunked"
+            },
+            "secureData": {
+              "properties": [
+                "outputs"
+              ]
+            }
+          }
+        },
+        "Response-MyHome": {
+          "type": "Response",
+          "kind": "Http",
+          "inputs": {
+            "statusCode": 200,
+            "headers": {
+              "Content-Type": "text/plain; charset=utf-8"
+            },
+            "body": "@body('HTTP')?['value']"
+          },
+          "runAfter": {
+            "HTTP": [
+              "Succeeded"
+            ]
+          },
+          "runtimeConfiguration": {
+            "secureData": {
+              "properties": [
+                "inputs"
+              ]
+            }
+          }
+        }
+      },
+      "outputs": {},
+      "parameters": {
+        "$connections": {
+          "type": "Object",
+          "defaultValue": {}
+        }
+      }
+    },
+    "parameters": {
+      "$connections": {
+        "type": "Object",
+        "value": {}
+      }
+    },
+    "accessControl": {
+      "triggers": {
+        "allowedCallerIpAddresses": [
+          {
+            "addressRange": "__ALLOWED_IP_CIDR__"
+          }
+        ]
+      }
+    },
+    "runtimeConfiguration": {
+      "lifetime": {
+        "unit": "day",
+        "count": "__RETENTION_DAYS__"
+      }
+    }
+  }
+}
+
