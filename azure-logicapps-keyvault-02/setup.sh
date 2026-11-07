@@ -37,7 +37,7 @@ mkdir -p .generated
 
 # STEP: resources
 az account set --subscription "$SUBSCRIPTION_ID"
-az account show --query '{subscription:name,id:id}' --output table
+az account show --query '{subscription:name,subscriptionId:id}' --output table
 az provider register --namespace Microsoft.KeyVault --wait --output none
 az provider register --namespace Microsoft.Logic --wait --output none
 az group create --name "$RG_NAME" --location "$LOCATION" --output none
