@@ -1,0 +1,14 @@
+{
+  "id": {
+    "S": "AzureToAWS"
+  },
+  "Message": {
+    "S": "Hello from DynamoDB!"
+  },
+  "Title": {
+    "S": "Azure → AWS ECS Sample"
+  },
+  "Version": {
+    "S": "1.0"
+  }
+}
