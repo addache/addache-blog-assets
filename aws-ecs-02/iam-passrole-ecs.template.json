@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::[AWSアカウントID]:role/ecs-task-role",
+        "arn:aws:iam::[AWSアカウントID]:role/ecs-task-execution-role"
+      ]
+    }
+  ]
+}
