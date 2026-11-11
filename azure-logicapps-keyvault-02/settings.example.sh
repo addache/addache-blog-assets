@@ -1,0 +1,17 @@
+# Azure Cloud Shell / Bash. Edit only settings.local.sh.
+# Enter the subscription ID (GUID), not its display name.
+SUBSCRIPTION_ID='REPLACE_WITH_SUBSCRIPTION_ID'
+LOCATION='japaneast'
+RG_NAME='Addache-Test'
+KV_NAME='key-testsecrets'
+LOGICAPP_NAME='Lap-TestSecrets'
+ALLOWED_IP_CIDR='REPLACE_WITH_HOME_PUBLIC_IPV4/32'
+RETENTION_DAYS=7
+
+RDP_HOST='localhost'
+RDP_USER='REPLACE_WITH_WINDOWS_USER'
+RDP_PASS='REPLACE_WITH_WINDOWS_PASSWORD'
+APP_ENABLED='ON'
+COPY_FROM='FromFolder'
+COPY_TO='ToFolder'
+

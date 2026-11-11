@@ -1,0 +1,5 @@
+{
+  "Variables": {
+    "DISCORD_WEBHOOK_URL": "ここにDiscordでコピーしたWebhook URLを貼り付ける"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "__TOKEN1__._domainkey.__DOMAIN__",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "__TOKEN1__.__SIGNING_HOSTED_ZONE__"
+          }
+        ]
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "__TOKEN2__._domainkey.__DOMAIN__",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "__TOKEN2__.__SIGNING_HOSTED_ZONE__"
+          }
+        ]
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "__TOKEN3__._domainkey.__DOMAIN__",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "__TOKEN3__.__SIGNING_HOSTED_ZONE__"
+          }
+        ]
+      }
+    }
+  ]
+}

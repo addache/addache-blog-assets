@@ -1,0 +1,20 @@
+{
+  "Name": "Lambda-to-Discord",
+  "Enabled": true,
+  "TlsPolicy": "Optional",
+  "Recipients": [],
+  "Actions": [
+    {
+      "S3Action": {
+        "BucketName": "__BUCKET_NAME__"
+      }
+    },
+    {
+      "LambdaAction": {
+        "FunctionArn": "__FUNCTION_ARN__",
+        "InvocationType": "Event"
+      }
+    }
+  ],
+  "ScanEnabled": true
+}

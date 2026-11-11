@@ -1,0 +1,9 @@
+[Unit]
+After=default.target
+
+[Install]
+WantedBy=default.target
+
+[Service]
+Type=forking
+ExecStart=/etc/rc.local.latest

@@ -1,0 +1,17 @@
+{
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "__DOMAIN__",
+        "Type": "MX",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "10 inbound-smtp.ap-northeast-1.amazonaws.com"
+          }
+        ]
+      }
+    }
+  ]
+}

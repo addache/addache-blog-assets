@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ECS Sample</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fa;
+            text-align: center;
+            margin-top: 80px;
+        }
+
+        h1 {
+            color: #1f4e79;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            display: inline-block;
+            min-width: 300px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,.2);
+        }
+    </style>
+
+</head>
+<body>
+
+<h1>Azure → AWS ECS Sample</h1>
+
+<p>S3 Static Website + ECS API</p>
+
+<button onclick="callApi()">API呼び出し</button>
+
+<div id="result">
+    結果待ち...
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
