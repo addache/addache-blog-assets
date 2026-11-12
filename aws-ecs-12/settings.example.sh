@@ -3,5 +3,4 @@
 # No access keys or GitHub tokens belong here.
 IAM_USER_NAME='ecs-github-user'
 GITHUB_REPOSITORY='REPLACE_WITH_OWNER/REPOSITORY'
-WORK_BRANCH='ecs-cli-sample'
 IMAGE_TAG='v1.0.0'

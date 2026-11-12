@@ -17,7 +17,8 @@ gh repo view "$GITHUB_REPOSITORY" --json isPrivate --jq .isPrivate | grep -qx tr
 remote_url="$(git -C repository remote get-url origin)"
 case "$remote_url" in "https://github.com/$GITHUB_REPOSITORY"|"https://github.com/$GITHUB_REPOSITORY.git"|"git@github.com:$GITHUB_REPOSITORY.git") ;; *) echo 'Checkout remote does not match settings.' >&2; exit 1;; esac
 [[ "$(git -C repository rev-parse HEAD)" == "$PUSHED_COMMIT" ]] || { echo 'Checkout commit changed. Review before tagging.' >&2; exit 1; }
-remote_commit="$(git -C repository ls-remote --exit-code origin "refs/heads/$WORK_BRANCH" | cut -f1)"
+repository_branch="$(git -C repository symbolic-ref --short HEAD)"
+remote_commit="$(git -C repository ls-remote --exit-code origin "refs/heads/$repository_branch" | cut -f1)"
 [[ "$remote_commit" == "$PUSHED_COMMIT" ]] || { echo 'Remote branch changed. Review before tagging.' >&2; exit 1; }
 [[ -z "$(git -C repository status --porcelain)" ]] || { echo 'Checkout has uncommitted changes.' >&2; exit 1; }
 gh secret list --repo "$GITHUB_REPOSITORY" --json name > .generated/secret-names.json

@@ -35,7 +35,6 @@ for scenario in empty existing collision; do
   cp "$repo_root/aws-ecs-02/.github/workflows/deploy.yml" "$fixture/files/.github/workflows/"
   cat > "$fixture/settings.local.sh" <<'SETTINGS'
 GITHUB_REPOSITORY='fixture/private-repo'
-WORK_BRANCH='ecs-cli-sample'
 SETTINGS
   export FIXTURE_REMOTE="$fixture/remote.git"
   git init --bare --initial-branch=main "$FIXTURE_REMOTE" >/dev/null
@@ -49,28 +48,30 @@ SETTINGS
     git -C "$fixture/seed" commit -m 'Existing fixture' >/dev/null
     git -C "$fixture/seed" push origin main >/dev/null
   fi
-  if [[ "$scenario" == collision ]]; then
+  if [[ "$scenario" != empty ]]; then
     if bash "$fixture/publish-files.sh"; then echo 'Collision was not blocked' >&2; exit 1; fi
     if git --git-dir="$FIXTURE_REMOTE" show-ref --verify --quiet refs/heads/ecs-cli-sample; then
       echo 'Unexpected branch created after conflict' >&2; exit 1
     fi
-    test "$(git --git-dir="$FIXTURE_REMOTE" show main:app.py)" = 'Keep existing application.'
+    test "$(git --git-dir="$FIXTURE_REMOTE" rev-list --count main)" = 1
+    if [[ "$scenario" == collision ]]; then
+      test "$(git --git-dir="$FIXTURE_REMOTE" show main:app.py)" = 'Keep existing application.'
+    else
+      test "$(git --git-dir="$FIXTURE_REMOTE" show main:README.md)" = 'Keep this existing file.'
+    fi
   else
     GIT_AUTHOR_EMAIL='outside@example.invalid' GIT_COMMITTER_EMAIL='outside@example.invalid' \
       bash "$fixture/publish-files.sh"
-    git --git-dir="$FIXTURE_REMOTE" show ecs-cli-sample:app.py > "$fixture/uploaded.py"
+    git --git-dir="$FIXTURE_REMOTE" show main:app.py > "$fixture/uploaded.py"
     cmp "$fixture/files/app.py" "$fixture/uploaded.py"
-    test "$(git --git-dir="$FIXTURE_REMOTE" log -1 --format=%ae ecs-cli-sample)" = '1234+fixture@users.noreply.github.com'
-    test "$(git --git-dir="$FIXTURE_REMOTE" log -1 --format=%an ecs-cli-sample)" = fixture
+    test "$(git --git-dir="$FIXTURE_REMOTE" log -1 --format=%ae main)" = '1234+fixture@users.noreply.github.com'
+    test "$(git --git-dir="$FIXTURE_REMOTE" log -1 --format=%an main)" = fixture
     source "$fixture/settings.local.sh"
-    test "$PUSHED_COMMIT" = "$(git --git-dir="$FIXTURE_REMOTE" rev-parse ecs-cli-sample)"
+    test "$PUSHED_COMMIT" = "$(git --git-dir="$FIXTURE_REMOTE" rev-parse main)"
     test "$FILES_COMMIT" = "$PUSHED_COMMIT"
     expected=4
-    if [[ "$scenario" == existing ]]; then
-      expected=5
-      test "$(git --git-dir="$FIXTURE_REMOTE" show ecs-cli-sample:README.md)" = 'Keep this existing file.'
-    fi
-    test "$(git --git-dir="$FIXTURE_REMOTE" ls-tree -r --name-only ecs-cli-sample | wc -l)" = "$expected"
+    test "$(git --git-dir="$FIXTURE_REMOTE" rev-list --count main)" = 1
+    test "$(git --git-dir="$FIXTURE_REMOTE" ls-tree -r --name-only main | wc -l)" = "$expected"
     test -z "$(git --git-dir="$FIXTURE_REMOTE" tag --list)"
   fi
   printf 'PASS: publishing fixture %s\n' "$scenario"

@@ -2,45 +2,44 @@
 
 元記事：https://addache.net/aws-ecs-02/
 
-AWS CloudShellのBashでIAM設定とGitHubへの資材配置・タグPushを進めるサンプルです。AWS上の実構築・GitHub認証からイメージPushまでの通し実行は未検証です。
+AWS CloudShellのBashで、IAM設定とGitHubへの4ファイル配置・タグ送信を進めるサンプルです。①の共通設定を先に読み込み、②には追加設定だけを記入します。
+
+## 前提
+
+- ①のCLI版でロール2つとECRを作成し、~/aws-ecs-11/settings.local.shへ設定・取得結果を保存済み。
+- GitHubで今回の検証用に、新しい空の非公開リポジトリを作成済み。README・.gitignore・Licenseは追加しない。
+- GitHubの準備と認証をIAMの前に済ませる。ブランチの作成・切り替えは行わない。
+
+## ファイル
 
 | ファイル | 用途 |
 |---|---|
-| settings.example.sh | settings.local.shへコピーする設定値。キーやトークンは入れない |
-| save-settings.sh | 取得したARNやコミットSHAなどの途中保存 |
-| setup-iam.sh | IAMユーザー、管理ポリシー2つ、PassRoleインラインポリシー |
-| install-gh.sh | 公式GitHub CLIをホーム配下へ配置。既に使えればスキップ |
-| prepare-files.sh | GUI版②の4ファイルをfiles/へ取得 |
-| publish-files.sh | 非公開リポジトリの新しい作業ブランチへ4ファイルを送信 |
-| release.sh | Secrets名を確認してタグPush・Release作成 |
-
-①のロール2つとECRが作成済みであることが前提です。AWSアカウント・リージョン・既存資材名とARNは①の設定から読み込みます。②ではIAM_USER_NAME、GITHUB_REPOSITORY（所有者/リポジトリ名）、未使用のWORK_BRANCH・IMAGE_TAGだけを設定します。
-
-アクセスキーの発行・Secrets登録・初回GitHub認証は手動です。これらの操作を無人で完了するSHは用意していません。対象は書き込み権限のある非公開リポジトリで、空の専用リポジトリを想定しています。同名ファイル・既存ワークフロー・既存ブランチは上書きしません。既存構成と衝突する場合はGUI版のファイル配置へ切り替えます。
+| settings.example.sh | IAMユーザー名・GitHubリポジトリ・イメージタグの追加設定 |
+| save-settings.sh | 取得値を各回の設定ファイルへ保存 |
+| install-gh.sh | 必要な場合だけ公式GitHub CLIをホームへ配置 |
+| setup-iam.sh | IAMユーザーと管理ポリシー2つ、PassRoleの登録 |
+| prepare-files.sh | GUI版②と同じ4ファイルをfiles/へ取得 |
+| publish-files.sh | 空の非公開リポジトリへ最初のコミットを送信 |
+| release.sh | Secrets名を確認し、タグ送信とRelease作成 |
 
 ## 実行の流れ
 
-1. 設定を編集し、bash setup-iam.shでIAMを作成。
-2. マネコンでアクセスキー発行、対象GitHubのActions Secretsへ手動登録。
+1. 空の非公開リポジトリを新規作成。
+2. 設定を編集し、①→②の順にsettings.local.shを読み込む。
 3. bash install-gh.shの後、export PATH="$HOME/.local/bin:$PATH"を設定。
-4. gh auth login --hostname github.com --git-protocol https --web --scopes workflowで本人認証。
-5. gh auth setup-git --hostname github.comを実行。
-6. bash prepare-files.shで資材を取得し、必要ならリージョン・ECR名を編集。
-7. bash publish-files.shで作業ブランチへ送信。
-8. bash release.shでタグを送る。この時点でAWSへのImage Pushが始まる。
+4. gh auth login --hostname github.com --git-protocol https --web --scopes workflowで認証し、gh auth setup-git --hostname github.comを実行。
+5. bash setup-iam.shでIAMを設定。
+6. アクセスキーをマネコンで発行し、GitHub Actions Secretsへ手動登録。
+7. bash prepare-files.shで4ファイルを取得・確認。
+8. bash publish-files.shで最初のコミットを送信。
+9. bash release.shでタグを送信。この時点でImage Pushが始まる。
 
-GitHubのコミットにはログイン名とIDに基づくnoreplyアドレスをリポジトリ単位で設定します。mainへの強制Pushは行いません。元記事のdeploy.ymlはタグPushまたは手動実行がトリガーで、作業ブランチのPushだけでは実行しません。
+既存のコミットがあるリポジトリは自動配置しません。clone先のrepository/が既にある場合も上書きせず停止するため、途中失敗時は状態を確認して未完了のGit操作から再開します。
 
-GUI版との主な手順差は、新しい作業ブランチを使用する点と、PassRoleをユーザーのインラインポリシーとして登録する点です。許可するロールとアクションは元記事のJSONと同じです。コード4点はaws-ecs-02の資材を再利用します。
+送信対象はYAML・app.py・requirements.txt・Dockerfileの4ファイルだけです。GitHubのログイン名とIDに基づくnoreplyアドレスを作者・コミッターに明示します。設定ファイル・AWSキー・GitHubトークンはコミットしません。
 
-ghは認証情報をホーム側へ保存する場合があります。認証設定ディレクトリをリポジトリへコピーしないでください。リポジトリへ配置するのは明示した4ファイルだけです。
+アクセスキー発行・Secrets登録・GitHubの認証承認は手動です。認証情報をsettings.local.shへ記入しません。ghの認証設定ディレクトリもコピーしないでください。
 
-一括SHの取得結果はsettings.local.shへ保存します。別のBashや一括SHの終了後は①のsettings.local.sh、②のsettings.local.sh、②のsave-settings.shの順にsourceして復元します。repository/が既にある場合は自動処理を停止するので、失敗したGit操作を確認して再開します。
+一括SHも①→②の順に読み込みます。共通設定やロールARN・ECR URIは①を参照し、②の取得結果は②へ保存します。既存のsettings.local.shにWORK_BRANCHが残っていても使用しないので、削除して構いません。
 
-自動削除はありません。AWSのユーザー・キー、GitHubのSecrets、ブランチ・タグ・Releaseは用途を確認して片付けてください。
-
-## 設定ファイルの分担
-
-①→②の順にsettings.local.shを読み込みます。一括SHも同じ順序です。①は共通AWS設定と既存資材、②はIAMユーザー・GitHub・イメージタグ、③はECS・ALBの追加設定を持ちます。後のファイルへ同じ共通設定を再記入しません。
-
-既存のsettings.local.shは自動更新しないため、旧版の②③に残る①由来の重複行は新しいテンプレートを見て削除してください。③のIMAGE_TAGは②へ集約します。実リソースの削除・再作成は不要です。
+AWS上の構築と実GitHub認証からECR Pushまでの通し検証は未実施です。自動削除処理は含みません。
