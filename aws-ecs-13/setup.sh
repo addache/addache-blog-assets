@@ -6,6 +6,7 @@ set -euo pipefail
 umask 077
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 source ./settings.local.sh
+source ./save-settings.sh
 export AWS_DEFAULT_REGION="$AWS_REGION" AWS_REGION
 export AWS_PAGER='' AWS_CLI_AUTO_PROMPT=off
 mkdir -p .generated
@@ -43,6 +44,7 @@ aws s3api head-object --bucket "${S3_BUCKET_PREFIX}-${AWS_ACCOUNT_ID}-${AWS_REGI
 # STEP 1: デフォルトVPCを取得する
 VPC_ID="$(aws ec2 describe-vpcs --filters Name=is-default,Values=true \
   --query 'Vpcs[0].VpcId' --output text)"
+save_settings VPC_ID
 printf 'VPC_ID=%s\n' "$VPC_ID"
 
 # STEP 2: デフォルトサブネットを取得する
@@ -50,6 +52,7 @@ aws ec2 describe-subnets \
   --filters "Name=vpc-id,Values=$VPC_ID" Name=default-for-az,Values=true \
   --output json > .generated/subnets.json
 read -r -a SUBNET_IDS <<< "$(jq -r '[.Subnets[].SubnetId] | join(" ")' .generated/subnets.json)"
+save_settings SUBNET_IDS
 jq '.Subnets[] | {SubnetId, AvailabilityZone, AvailableIpAddressCount}' .generated/subnets.json
 
 [[ "$VPC_ID" == vpc-* ]] || { echo 'Default VPC not found.' >&2; exit 1; }
@@ -86,6 +89,7 @@ ALB_SG_ID="$(aws ec2 create-security-group \
   --vpc-id "$VPC_ID" \
   --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$ALB_SG_NAME}]" \
   --query GroupId --output text)"
+save_settings ALB_SG_ID
 printf '%s\n' "$ALB_SG_ID" > .generated/alb-sg-id.txt
 printf 'ALB_SG_ID=%s\n' "$ALB_SG_ID"
 
@@ -99,6 +103,7 @@ ECS_SG_ID="$(aws ec2 create-security-group \
   --vpc-id "$VPC_ID" \
   --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$ECS_SG_NAME}]" \
   --query GroupId --output text)"
+save_settings ECS_SG_ID
 printf '%s\n' "$ECS_SG_ID" > .generated/ecs-sg-id.txt
 printf 'ECS_SG_ID=%s\n' "$ECS_SG_ID"
 
@@ -111,6 +116,7 @@ TARGET_GROUP_ARN="$(aws elbv2 create-target-group \
   --name "$TARGET_GROUP_NAME" --protocol HTTP --port 8080 \
   --vpc-id "$VPC_ID" --target-type ip --health-check-path /health \
   --query 'TargetGroups[0].TargetGroupArn' --output text)"
+save_settings TARGET_GROUP_ARN
 printf '%s\n' "$TARGET_GROUP_ARN" > .generated/target-group-arn.txt
 printf 'TARGET_GROUP_ARN=%s\n' "$TARGET_GROUP_ARN"
 
@@ -120,7 +126,9 @@ aws elbv2 create-load-balancer --name "$ALB_NAME" \
   --security-groups "$ALB_SG_ID" --subnets "${SUBNET_IDS[@]}" \
   --output json > .generated/alb.json
 ALB_ARN="$(jq -r '.LoadBalancers[0].LoadBalancerArn' .generated/alb.json)"
+save_settings ALB_ARN
 ALB_DNS="$(jq -r '.LoadBalancers[0].DNSName' .generated/alb.json)"
+save_settings ALB_DNS
 printf 'ALB_DNS=%s\n' "$ALB_DNS"
 
 # STEP 9: ALBの作成完了を待つ
@@ -141,21 +149,26 @@ jq '.cluster | {clusterName, clusterArn, status}' .generated/cluster.json
 # STEP 12: タスク実行ロールのARNを取得する
 EXECUTION_ROLE_ARN="$(aws iam get-role --role-name "$EXECUTION_ROLE_NAME" \
   --query Role.Arn --output text)"
+save_settings EXECUTION_ROLE_ARN
 printf 'EXECUTION_ROLE_ARN=%s\n' "$EXECUTION_ROLE_ARN"
 
 # STEP 13: アプリ用ロールのARNを取得する
 TASK_ROLE_ARN="$(aws iam get-role --role-name "$TASK_ROLE_NAME" \
   --query Role.Arn --output text)"
+save_settings TASK_ROLE_ARN
 printf 'TASK_ROLE_ARN=%s\n' "$TASK_ROLE_ARN"
 
 # STEP 14: ②でPushしたイメージを取得する
 ECR_URI="$(aws ecr describe-repositories --registry-id "$AWS_ACCOUNT_ID" \
   --repository-names "$ECR_REPOSITORY" \
   --query 'repositories[0].repositoryUri' --output text)"
+save_settings ECR_URI
 IMAGE_DIGEST="$(aws ecr describe-images --registry-id "$AWS_ACCOUNT_ID" \
   --repository-name "$ECR_REPOSITORY" --image-ids "imageTag=$IMAGE_TAG" \
   --query 'imageDetails[0].imageDigest' --output text)"
+save_settings IMAGE_DIGEST
 IMAGE_URI="$ECR_URI@$IMAGE_DIGEST"
+save_settings IMAGE_URI
 printf 'IMAGE_URI=%s\n' "$IMAGE_URI"
 
 # STEP 15: ロググループを作成する
@@ -177,11 +190,12 @@ jq '{family, cpu, memory, containerDefinitions}' .generated/task-definition.json
 TASK_DEFINITION_ARN="$(aws ecs register-task-definition \
   --cli-input-json file://.generated/task-definition.json \
   --query 'taskDefinition.taskDefinitionArn' --output text)"
+save_settings TASK_DEFINITION_ARN
 printf '%s\n' "$TASK_DEFINITION_ARN" > .generated/task-definition-arn.txt
 printf 'TASK_DEFINITION_ARN=%s\n' "$TASK_DEFINITION_ARN"
 
 # STEP 18: サービスのネットワーク設定を作る
-jq -n --argjson subnets "$(jq '[.Subnets[].SubnetId]' .generated/subnets.json)" \
+jq -n --argjson subnets "$(printf '%s\n' "${SUBNET_IDS[@]}" | jq -R . | jq -s .)" \
   --arg sg "$ECS_SG_ID" \
   '{awsvpcConfiguration:{subnets:$subnets,securityGroups:[$sg],assignPublicIp:"ENABLED"}}' \
   > .generated/network-configuration.json
@@ -205,6 +219,7 @@ aws elbv2 describe-target-health --target-group-arn "$TARGET_GROUP_ARN" \
 
 # STEP 22: APIの接続先を設定する
 API_URL="http://$ALB_DNS/api"
+save_settings API_URL
 printf '%s\n' "$API_URL" > .generated/api-url.txt
 printf 'API_URL=%s\n' "$API_URL"
 
@@ -237,6 +252,7 @@ jq -e -s '.[0].source == "DynamoDB" and .[1].source == "DynamoDB" and
 
 # STEP 28: S3バケット名を組み立てる
 S3_BUCKET="${S3_BUCKET_PREFIX}-${AWS_ACCOUNT_ID}-${AWS_REGION}-an"
+save_settings S3_BUCKET
 printf 'S3_BUCKET=%s\n' "$S3_BUCKET"
 
 # STEP 29: 配置済みJavaScriptを取得する
@@ -254,6 +270,7 @@ aws s3api put-object --bucket "$S3_BUCKET" --key app.js --body .generated/app.js
   --content-type 'application/javascript; charset=utf-8' \
   --expected-bucket-owner "$AWS_ACCOUNT_ID"
 WEBSITE_URL="http://${S3_BUCKET}.s3-website-ap-northeast-1.amazonaws.com"
+save_settings WEBSITE_URL
 printf '%s\n' "$WEBSITE_URL" > .generated/website-url.txt
 printf 'Web画面: %s\nAPI: %s\n' "$WEBSITE_URL" "$API_URL"
 jq -n --arg account "$AWS_ACCOUNT_ID" --arg region "$AWS_REGION" \

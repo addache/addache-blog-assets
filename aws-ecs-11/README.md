@@ -13,6 +13,7 @@ AWS CloudShellのBash、東京リージョン `ap-northeast-1`、AWS CLI v2の�
 |---|---|
 | `settings.example.sh` | `settings.local.sh` にコピーして編集する変数一覧 |
 | `setup.sh` | 任意の一括実行版 |
+| `save-settings.sh` | 取得結果をsettings.local.shへ保存する共通処理 |
 | `cleanup.sh` | 検証後の削除用。旧CLI版の独自インラインポリシーにも対応 |
 | `web/index.html`・`web/app.js` | S3へ配置するサンプルWeb画面 |
 
@@ -42,7 +43,7 @@ fi
 bash setup.sh
 ```
 
-一括実行後に個別CLIを重ねて実行する必要はありません。一括実行の子Bash内で取得した変数は親のCloudShellへ残らないので、後続回で必要な値は `.generated/resources.json` または各サービスの参照CLIから取得します。
+一括実行後に個別CLIを重ねて実行する必要はありません。一括実行の子Bash内で取得した変数は親のCloudShellへ残りませんが、ID・ARN・URLは取得した時点で `settings.local.sh` へ保存します。再開時は同じフォルダーで `source ./settings.local.sh` と `source ./save-settings.sh` を実行してください。最後の `.generated/resources.json` の生成も維持しています。
 
 ## GUI版との対応
 
@@ -83,3 +84,16 @@ bash cleanup.sh
 ```
 
 旧版の `ECS-Sample-DynamoDB` インラインポリシーと、修正版の `AmazonDynamoDBFullAccess_v2` 管理ポリシーを外してからアプリ用ロールを削除します。①の範囲だけを対象とし、後続回で作成したECSやALBなどは削除しません。追加のS3ファイルやECRイメージは強制削除せず、エラー時に停止します。ローカルの設定ファイルは残します。
+
+## 作業途中の値を保存する
+
+`setup.sh` と同じ場所に `save-settings.sh` も保存してください。取得したID・ARN・URLはその都度 `settings.local.sh` へ追記・更新します。再取得しても同じ変数の行は増えません。③ではサブネットIDの配列も保存します。
+
+```bash
+source ./settings.local.sh
+source ./save-settings.sh
+export AWS_REGION
+export AWS_DEFAULT_REGION="$AWS_REGION"
+```
+
+保存されるのは設定値・リソース参照値です。AWSキー・トークン・パスワードは保存しません。設定ファイルは公開・S3アップロードしないでください。再開時も新規作成コマンドや一括SHを最初から重ねて実行するのではなく、未完了の手順から進めます。リソースを削除・再作成した場合は、対応する参照コマンドでIDなどを再取得して保存し直します。

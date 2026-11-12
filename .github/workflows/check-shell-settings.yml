@@ -1,0 +1,30 @@
+name: Check shell settings persistence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'aws-ecs-11/**'
+      - 'aws-ecs-13/**'
+      - 'tests/test-save-settings.sh'
+      - '.github/workflows/check-shell-settings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: |
+          bash -n aws-ecs-11/setup.sh
+          bash -n aws-ecs-11/save-settings.sh
+          bash -n aws-ecs-13/setup.sh
+          bash -n aws-ecs-13/save-settings.sh
+          bash -n tests/test-save-settings.sh
+      - name: Exercise settings persistence without AWS
+        run: bash tests/test-save-settings.sh

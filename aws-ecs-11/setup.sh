@@ -11,6 +11,7 @@ ASSET_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ASSET_DIR"
 [[ -f settings.local.sh ]] || { echo 'Copy settings.example.sh to settings.local.sh and edit it first.' >&2; exit 1; }
 source ./settings.local.sh
+source ./save-settings.sh
 for tool in aws jq grep sed curl; do
   command -v "$tool" >/dev/null || { printf 'Required command missing: %s\n' "$tool" >&2; exit 1; }
 done
@@ -30,6 +31,7 @@ export AWS_PAGER='' AWS_CLI_AUTO_PROMPT=off
 CALLER_ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 [[ "$CALLER_ACCOUNT" == "$AWS_ACCOUNT_ID" ]] || { echo 'Signed-in AWS account does not match settings.local.sh.' >&2; exit 1; }
 S3_BUCKET="${S3_BUCKET_PREFIX}-${AWS_ACCOUNT_ID}-${AWS_REGION}-an"
+save_settings S3_BUCKET
 [[ ${#S3_BUCKET} -le 63 ]] || { echo 'S3 bucket name exceeds 63 characters. Shorten S3_BUCKET_PREFIX.' >&2; exit 1; }
 mkdir -p .generated
 printf 'Account=%s\nRegion=%s\nS3 bucket=%s\n' "$AWS_ACCOUNT_ID" "$AWS_REGION" "$S3_BUCKET"
@@ -70,15 +72,17 @@ jq -n \
 aws iam create-role --role-name "$EXECUTION_ROLE_NAME" \
   --assume-role-policy-document file://.generated/ecs-trust-policy.json \
   --query 'Role.{Name:RoleName,Arn:Arn}' --output table
+EXECUTION_ROLE_ARN="$(aws iam get-role --role-name "$EXECUTION_ROLE_NAME" --query Role.Arn --output text)"
+save_settings EXECUTION_ROLE_ARN
 aws iam attach-role-policy --role-name "$EXECUTION_ROLE_NAME" \
   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 aws iam create-role --role-name "$TASK_ROLE_NAME" \
   --assume-role-policy-document file://.generated/ecs-trust-policy.json \
   --query 'Role.{Name:RoleName,Arn:Arn}' --output table
+TASK_ROLE_ARN="$(aws iam get-role --role-name "$TASK_ROLE_NAME" --query Role.Arn --output text)"
+save_settings TASK_ROLE_ARN
 aws iam attach-role-policy --role-name "$TASK_ROLE_NAME" \
   --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess_v2
-EXECUTION_ROLE_ARN="$(aws iam get-role --role-name "$EXECUTION_ROLE_NAME" --query Role.Arn --output text)"
-TASK_ROLE_ARN="$(aws iam get-role --role-name "$TASK_ROLE_NAME" --query Role.Arn --output text)"
 printf 'EXECUTION_ROLE_ARN=%s\nTASK_ROLE_ARN=%s\n' "$EXECUTION_ROLE_ARN" "$TASK_ROLE_ARN"
 aws iam list-attached-role-policies --role-name "$EXECUTION_ROLE_NAME" --output table
 aws iam list-attached-role-policies --role-name "$TASK_ROLE_NAME" --output table
@@ -97,6 +101,7 @@ aws dynamodb describe-table --table-name "$DYNAMODB_TABLE" \
 aws ecr create-repository --repository-name "$ECR_REPOSITORY" \
   --query 'repository.{Name:repositoryName,Uri:repositoryUri}' --output table
 ECR_URI="$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].repositoryUri' --output text)"
+save_settings ECR_URI
 printf 'ECR_URI=%s\n' "$ECR_URI"
 
 # STEP: s3
@@ -131,6 +136,7 @@ aws s3api get-public-access-block --bucket "$S3_BUCKET" --expected-bucket-owner 
 # STEP: verify
 # Tokyo's S3 website endpoint uses s3-website-REGION, not s3-website.REGION.
 WEBSITE_URL="http://${S3_BUCKET}.s3-website-ap-northeast-1.amazonaws.com"
+save_settings WEBSITE_URL
 printf '%s\n' "$WEBSITE_URL" > .generated/website-url.txt
 jq -n --arg account "$AWS_ACCOUNT_ID" --arg region "$AWS_REGION" \
   --arg executionRole "$EXECUTION_ROLE_ARN" --arg taskRole "$TASK_ROLE_ARN" \

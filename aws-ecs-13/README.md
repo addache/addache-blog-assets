@@ -9,6 +9,7 @@ AWS CloudShellのBash・東京リージョンで、①の既存資材と②のPu
 |---|---|
 | settings.example.sh | settings.local.shへコピーする設定値 |
 | setup.sh | 一括実行SH |
+| save-settings.sh | 取得結果をsettings.local.shへ保存する共通処理 |
 | task-definition.template.json | 設定値をjqで反映するタスク定義 |
 | dynamodb-item.json | GUI版と同じサンプル項目 |
 
@@ -21,7 +22,7 @@ AWS CloudShellのBash・東京リージョンで、①の既存資材と②のPu
 
 ## 設定と実行
 
-このフォルダーの4ファイルを同じ作業フォルダーへ保存します。settings.example.shをsettings.local.shへコピーし、AWS_ACCOUNT_IDをログイン中の12桁IDへ設定、既存資材名とタグを確認してから実行します。IDは aws sts get-caller-identity --query Account --output text で取得できます。
+このフォルダーの5ファイルを同じ作業フォルダーへ保存します。settings.example.shをsettings.local.shへコピーし、AWS_ACCOUNT_IDをログイン中の12桁IDへ設定、既存資材名とタグを確認してから実行します。IDは aws sts get-caller-identity --query Account --output text で取得できます。
 
 ```bash
 bash setup.sh
@@ -46,3 +47,16 @@ Route 53の変更は行いません。ALBのDNS名でAPIを確認し、そのURL
 .generated/app.before.jsは更新前のJavaScriptです。設定・生成JSON・認証情報はS3へアップロードしません。バケットの公開設定は変更しません。
 
 ALB・Fargate・ログなどの料金が発生します。後続回に進まない場合はサービスと今回作成した資材を削除してください。自動削除処理は含みません。①の共用資材の削除とは分けて扱います。
+
+## 作業途中の値を保存する
+
+`setup.sh` と同じ場所に `save-settings.sh` も保存してください。取得したID・ARN・URLはその都度 `settings.local.sh` へ追記・更新します。再取得しても同じ変数の行は増えません。③ではサブネットIDの配列も保存します。
+
+```bash
+source ./settings.local.sh
+source ./save-settings.sh
+export AWS_REGION
+export AWS_DEFAULT_REGION="$AWS_REGION"
+```
+
+保存されるのは設定値・リソース参照値です。AWSキー・トークン・パスワードは保存しません。設定ファイルは公開・S3アップロードしないでください。再開時も新規作成コマンドや一括SHを最初から重ねて実行するのではなく、未完了の手順から進めます。リソースを削除・再作成した場合は、対応する参照コマンドでIDなどを再取得して保存し直します。
