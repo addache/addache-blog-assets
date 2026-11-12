@@ -14,7 +14,7 @@ AWS CloudShellのBashでIAM設定とGitHubへの資材配置・タグPushを進�
 | publish-files.sh | 非公開リポジトリの新しい作業ブランチへ4ファイルを送信 |
 | release.sh | Secrets名を確認してタグPush・Release作成 |
 
-①のロール2つとECRが作成済みであることが前提です。AWS_ACCOUNT_ID、既存資材名、GITHUB_REPOSITORY（所有者/リポジトリ名）、未使用のWORK_BRANCH・IMAGE_TAGを設定します。
+①のロール2つとECRが作成済みであることが前提です。AWSアカウント・リージョン・既存資材名とARNは①の設定から読み込みます。②ではIAM_USER_NAME、GITHUB_REPOSITORY（所有者/リポジトリ名）、未使用のWORK_BRANCH・IMAGE_TAGだけを設定します。
 
 アクセスキーの発行・Secrets登録・初回GitHub認証は手動です。これらの操作を無人で完了するSHは用意していません。対象は書き込み権限のある非公開リポジトリで、空の専用リポジトリを想定しています。同名ファイル・既存ワークフロー・既存ブランチは上書きしません。既存構成と衝突する場合はGUI版のファイル配置へ切り替えます。
 
@@ -35,6 +35,12 @@ GUI版との主な手順差は、新しい作業ブランチを使用する点�
 
 ghは認証情報をホーム側へ保存する場合があります。認証設定ディレクトリをリポジトリへコピーしないでください。リポジトリへ配置するのは明示した4ファイルだけです。
 
-一括SHの取得結果はsettings.local.shへ保存します。別のBashや一括SHの終了後はsource ./settings.local.shとsource ./save-settings.shで復元します。repository/が既にある場合は自動処理を停止するので、失敗したGit操作を確認して再開します。
+一括SHの取得結果はsettings.local.shへ保存します。別のBashや一括SHの終了後は①のsettings.local.sh、②のsettings.local.sh、②のsave-settings.shの順にsourceして復元します。repository/が既にある場合は自動処理を停止するので、失敗したGit操作を確認して再開します。
 
 自動削除はありません。AWSのユーザー・キー、GitHubのSecrets、ブランチ・タグ・Releaseは用途を確認して片付けてください。
+
+## 設定ファイルの分担
+
+①→②の順にsettings.local.shを読み込みます。一括SHも同じ順序です。①は共通AWS設定と既存資材、②はIAMユーザー・GitHub・イメージタグ、③はECS・ALBの追加設定を持ちます。後のファイルへ同じ共通設定を再記入しません。
+
+既存のsettings.local.shは自動更新しないため、旧版の②③に残る①由来の重複行は新しいテンプレートを見て削除してください。③のIMAGE_TAGは②へ集約します。実リソースの削除・再作成は不要です。

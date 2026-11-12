@@ -4,6 +4,7 @@ set +v
 set -euo pipefail
 umask 077
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+source ~/aws-ecs-11/settings.local.sh
 source ./settings.local.sh
 source ./save-settings.sh
 export AWS_REGION AWS_DEFAULT_REGION="$AWS_REGION" AWS_PAGER='' AWS_CLI_AUTO_PROMPT=off

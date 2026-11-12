@@ -63,3 +63,12 @@ save_settings() {
     return 1
   fi
 }
+
+# Save a shared value back to the settings file that owns it.
+# Example: save_settings_to ~/aws-ecs-11/settings.local.sh API_URL
+save_settings_to() {
+  [[ $# -ge 2 ]] || { echo 'Pass a settings path and variable names.' >&2; return 1; }
+  local _SETTINGS_LOCAL_PATH="$1"
+  shift
+  save_settings "$@"
+}

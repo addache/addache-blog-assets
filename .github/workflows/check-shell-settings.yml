@@ -9,6 +9,7 @@ on:
       - 'aws-ecs-13/**'
       - 'tests/test-save-settings.sh'
       - 'tests/test-publish-files.sh'
+      - 'tests/test-settings-chain.sh'
       - '.github/workflows/check-shell-settings.yml'
   workflow_dispatch:
 
@@ -30,7 +31,10 @@ jobs:
           bash -n tests/test-save-settings.sh
           for file in aws-ecs-12/*.sh; do bash -n "$file"; done
           bash -n tests/test-publish-files.sh
+          bash -n tests/test-settings-chain.sh
       - name: Exercise settings persistence without AWS
         run: bash tests/test-save-settings.sh
       - name: Exercise file publishing with local Git fixtures
         run: bash tests/test-publish-files.sh
+      - name: Exercise inherited settings and per-part save locations
+        run: bash tests/test-settings-chain.sh

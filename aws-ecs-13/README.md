@@ -22,7 +22,7 @@ AWS CloudShellのBash・東京リージョンで、①の既存資材と②のPu
 
 ## 設定と実行
 
-このフォルダーの5ファイルを同じ作業フォルダーへ保存します。settings.example.shをsettings.local.shへコピーし、AWS_ACCOUNT_IDをログイン中の12桁IDへ設定、既存資材名とタグを確認してから実行します。IDは aws sts get-caller-identity --query Account --output text で取得できます。
+このフォルダーの5ファイルを同じ作業フォルダーへ保存します。settings.example.shをsettings.local.shへコピーし、③の追加リソース名だけを設定してから実行します。AWSアカウント・リージョン・既存資材の名前とARNは①、IMAGE_TAGは②から読み込みます。
 
 ```bash
 bash setup.sh
@@ -50,9 +50,11 @@ ALB・Fargate・ログなどの料金が発生します。後続回に進まな�
 
 ## 作業途中の値を保存する
 
-`setup.sh` と同じ場所に `save-settings.sh` も保存してください。取得したID・ARN・URLはその都度 `settings.local.sh` へ追記・更新します。再取得しても同じ変数の行は増えません。③ではサブネットIDの配列も保存します。
+`setup.sh` と同じ場所に `save-settings.sh` も保存してください。取得したID・ARN・URLはその都度 `settings.local.sh` へ追記・更新します。再取得しても同じ変数の行は増えません。③ではサブネットIDの配列も保存します。共通のAPI_URLだけはsave_settings_toで①へ保存し、S3_BUCKET・WEBSITE_URL・既存ロールARN・ECR_URIは①の保存済み値を参照します。
 
 ```bash
+source ~/aws-ecs-11/settings.local.sh
+source ~/aws-ecs-12/settings.local.sh
 source ./settings.local.sh
 source ./save-settings.sh
 export AWS_REGION
@@ -60,3 +62,9 @@ export AWS_DEFAULT_REGION="$AWS_REGION"
 ```
 
 保存されるのは設定値・リソース参照値です。AWSキー・トークン・パスワードは保存しません。設定ファイルは公開・S3アップロードしないでください。再開時も新規作成コマンドや一括SHを最初から重ねて実行するのではなく、未完了の手順から進めます。リソースを削除・再作成した場合は、対応する参照コマンドでIDなどを再取得して保存し直します。
+
+## 設定ファイルの分担
+
+①→②→③の順にsettings.local.shを読み込みます。一括SHも同じ順序です。①は共通AWS設定と既存資材、②はIAMユーザー・GitHub・イメージタグ、③はECS・ALBの追加設定を持ちます。後のファイルへ同じ共通設定を再記入しません。
+
+既存のsettings.local.shは自動更新しないため、旧版の②③に残る①由来の重複行は新しいテンプレートを見て削除してください。③のIMAGE_TAGは②へ集約します。実リソースの削除・再作成は不要です。

@@ -4,6 +4,7 @@ set +v
 set -euo pipefail
 umask 077
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+source ~/aws-ecs-11/settings.local.sh
 source ./settings.local.sh
 source ./save-settings.sh
 export AWS_REGION AWS_DEFAULT_REGION="$AWS_REGION" AWS_PAGER='' AWS_CLI_AUTO_PROMPT=off
@@ -12,12 +13,11 @@ mkdir -p .generated
 [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ && "$AWS_REGION" == ap-northeast-1 ]] || { echo 'Check account ID and Tokyo region.' >&2; exit 1; }
 [[ "$(aws sts get-caller-identity --query Account --output text)" == "$AWS_ACCOUNT_ID" ]] || { echo 'AWS account mismatch.' >&2; exit 1; }
 [[ "$IAM_USER_NAME" =~ ^[A-Za-z0-9_-]{1,64}$ ]] || { echo 'Use a simple IAM user name.' >&2; exit 1; }
+: "${EXECUTION_ROLE_ARN:?Complete CLI part 1 and load its settings first}" "${TASK_ROLE_ARN:?Load part-1 role ARN}" "${ECR_URI:?Load part-1 ECR URI}"
 aws iam list-users --output json > .generated/existing-users.json
 jq -e --arg user "$IAM_USER_NAME" 'all(.Users[]; .UserName != $user)' .generated/existing-users.json >/dev/null || { echo 'IAM user already exists. Use the individual steps for an existing user.' >&2; exit 1; }
-EXECUTION_ROLE_ARN="$(aws iam get-role --role-name "$EXECUTION_ROLE_NAME" --query Role.Arn --output text)"
-save_settings EXECUTION_ROLE_ARN
-TASK_ROLE_ARN="$(aws iam get-role --role-name "$TASK_ROLE_NAME" --query Role.Arn --output text)"
-save_settings TASK_ROLE_ARN
+aws iam get-role --role-name "$EXECUTION_ROLE_NAME" --output json > .generated/execution-role-check.json
+aws iam get-role --role-name "$TASK_ROLE_NAME" --output json > .generated/task-role-check.json
 aws ecr describe-repositories --registry-id "$AWS_ACCOUNT_ID" --repository-names "$ECR_REPOSITORY" --output json > .generated/ecr.json
 
 aws iam create-user --user-name "$IAM_USER_NAME" --output json > .generated/iam-user.json

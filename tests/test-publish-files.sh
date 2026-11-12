@@ -7,7 +7,11 @@ trap 'rm -rf -- "$test_root"' EXIT
 export GIT_CONFIG_GLOBAL="$test_root/gitconfig"
 export GIT_CONFIG_NOSYSTEM=1
 export HOME="$test_root/home"
-mkdir -p "$HOME"
+mkdir -p "$HOME/aws-ecs-11"
+cat > "$HOME/aws-ecs-11/settings.local.sh" <<'PART1'
+AWS_REGION='ap-northeast-1'
+AWS_ACCOUNT_ID='123456789012'
+PART1
 mkdir -p "$test_root/bin"
 cat > "$test_root/bin/gh" <<'FAKE_GH'
 #!/usr/bin/env bash
@@ -30,7 +34,6 @@ for scenario in empty existing collision; do
   cp "$repo_root/aws-ecs-02/app.py" "$repo_root/aws-ecs-02/Dockerfile" "$repo_root/aws-ecs-02/requirements.txt" "$fixture/files/"
   cp "$repo_root/aws-ecs-02/.github/workflows/deploy.yml" "$fixture/files/.github/workflows/"
   cat > "$fixture/settings.local.sh" <<'SETTINGS'
-AWS_REGION='ap-northeast-1'
 GITHUB_REPOSITORY='fixture/private-repo'
 WORK_BRANCH='ecs-cli-sample'
 SETTINGS
