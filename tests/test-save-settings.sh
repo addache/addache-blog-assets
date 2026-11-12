@@ -5,7 +5,7 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 test_root="$(mktemp -d)"
 trap 'rm -rf -- "$test_root"' EXIT
 
-for part in 11 13; do
+for part in 11 12 13; do
   fixture="$test_root/part $part"
   mkdir -p "$fixture"
   cp "$repo_root/aws-ecs-$part/save-settings.sh" "$fixture/save-settings.sh"

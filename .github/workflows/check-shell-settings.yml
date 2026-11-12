@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - 'aws-ecs-11/**'
+      - 'aws-ecs-12/**'
       - 'aws-ecs-13/**'
       - 'tests/test-save-settings.sh'
+      - 'tests/test-publish-files.sh'
       - '.github/workflows/check-shell-settings.yml'
   workflow_dispatch:
 
@@ -26,5 +28,9 @@ jobs:
           bash -n aws-ecs-13/setup.sh
           bash -n aws-ecs-13/save-settings.sh
           bash -n tests/test-save-settings.sh
+          for file in aws-ecs-12/*.sh; do bash -n "$file"; done
+          bash -n tests/test-publish-files.sh
       - name: Exercise settings persistence without AWS
         run: bash tests/test-save-settings.sh
+      - name: Exercise file publishing with local Git fixtures
+        run: bash tests/test-publish-files.sh

@@ -1,0 +1,4 @@
+settings.local.sh
+.generated/
+files/
+repository/

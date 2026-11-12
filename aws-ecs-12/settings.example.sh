@@ -1,0 +1,10 @@
+# AWS CloudShell / Bash. No access keys or GitHub tokens belong here.
+AWS_ACCOUNT_ID='REPLACE_WITH_12_DIGIT_AWS_ACCOUNT_ID'
+AWS_REGION='ap-northeast-1'
+IAM_USER_NAME='ecs-github-user'
+EXECUTION_ROLE_NAME='ecs-task-execution-role'
+TASK_ROLE_NAME='ecs-task-role'
+ECR_REPOSITORY='ecs-sample-api'
+GITHUB_REPOSITORY='REPLACE_WITH_OWNER/REPOSITORY'
+WORK_BRANCH='ecs-cli-sample'
+IMAGE_TAG='v1.0.0'
