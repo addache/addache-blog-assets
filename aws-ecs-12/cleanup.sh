@@ -32,7 +32,7 @@ jq --arg tag "$IMAGE_TAG" '
   end' .generated/cleanup-images.json > .generated/cleanup-image-ids.json
 printf 'Account: %s\nIAM user: %s\nGitHub: %s\nECR: %s\n' "$AWS_ACCOUNT_ID" "$IAM_USER_NAME" "$GITHUB_REPOSITORY" "$ECR_REPOSITORY"
 echo 'The two Actions Secrets, all access keys of this IAM user, this IAM user, and the selected ECR tags will be deleted.'
-echo 'Shared part-1 resources, the GitHub repository, local settings, and GitHub login will remain.'
+echo 'Shared part-1 resources and GitHub repository/login remain. Local checkout will be backed up and saved commit IDs cleared.'
 jq . .generated/cleanup-image-ids.json
 read -r -p 'Type DELETE to continue: ' answer </dev/tty
 [[ "$answer" == DELETE ]] || { echo 'Cancelled.'; exit 0; }
@@ -59,4 +59,24 @@ if jq -e 'length>0' .generated/cleanup-image-ids.json >/dev/null; then
   jq . .generated/cleanup-images-result.json
   jq -e '.failures | length==0' .generated/cleanup-images-result.json >/dev/null || { echo 'Some ECR tags could not be deleted. Review failures.' >&2; exit 1; }
 fi
-echo 'Part-2 cleanup completed. The repository, shared resources, local settings, and GitHub login remain.'
+(
+set -euo pipefail
+umask 077
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+[[ -f settings.local.sh && ! -L settings.local.sh ]] || { echo 'Expected a regular settings.local.sh.' >&2; exit 1; }
+backup_dir="$(mktemp -d ./local-backup.XXXXXX)"
+cp -p -- settings.local.sh "$backup_dir/settings.local.sh"
+if [[ -e repository || -L repository ]]; then
+  mv -- repository "$backup_dir/repository"
+fi
+tmp="$(mktemp ./settings.local.sh.tmp.XXXXXX)"
+trap 'rm -f -- "$tmp"' EXIT
+sed -E '/^[[:space:]]*(export[[:space:]]+)?(FILES_COMMIT|PUSHED_COMMIT)[[:space:]]*=/d' settings.local.sh > "$tmp"
+chmod 600 "$tmp"
+mv -- "$tmp" settings.local.sh
+printf 'Local checkout and settings backup: %s\n' "$backup_dir"
+echo 'FILES_COMMIT and PUSHED_COMMIT were removed from saved settings.'
+echo 'In your current shell, run: unset FILES_COMMIT PUSHED_COMMIT'
+
+)
+echo 'Part-2 cleanup completed. Local checkout was backed up; shared resources and GitHub repository/login remain.'
