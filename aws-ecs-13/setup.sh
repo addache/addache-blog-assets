@@ -34,9 +34,6 @@ aws iam get-role --role-name "$EXECUTION_ROLE_NAME" --output json > .generated/e
 aws iam get-role --role-name "$TASK_ROLE_NAME" --output json > .generated/existing-task-role.json
 aws dynamodb describe-table --table-name "$DYNAMODB_TABLE" --output json > .generated/existing-table.json
 jq -e '.Table.TableStatus=="ACTIVE" and .Table.KeySchema==[{AttributeName:"id",KeyType:"HASH"}]' .generated/existing-table.json >/dev/null
-aws dynamodb get-item --table-name "$DYNAMODB_TABLE" --key '{"id":{"S":"AzureToAWS"}}' \
-  --consistent-read --output json > .generated/existing-item.json
-jq -e 'has("Item") | not' .generated/existing-item.json >/dev/null || { echo 'Sample item already exists; it will not be replaced.' >&2; exit 1; }
 aws ecr describe-images --registry-id "$AWS_ACCOUNT_ID" --repository-name "$ECR_REPOSITORY" \
   --image-ids "imageTag=$IMAGE_TAG" --output json > .generated/existing-image.json
 aws s3api head-object --bucket "$S3_BUCKET" \
@@ -148,7 +145,7 @@ aws ecs create-cluster --cluster-name "$CLUSTER_NAME" \
   --output json > .generated/cluster.json
 jq '.cluster | {clusterName, clusterArn, status}' .generated/cluster.json
 
-# STEP 12: ②でPushしたイメージを取得する
+# STEP 12: Image Push編でPushしたイメージを取得する
 IMAGE_DIGEST="$(aws ecr describe-images --registry-id "$AWS_ACCOUNT_ID" \
   --repository-name "$ECR_REPOSITORY" --image-ids "imageTag=$IMAGE_TAG" \
   --query 'imageDetails[0].imageDigest' --output text)"
@@ -204,6 +201,8 @@ aws elbv2 describe-target-health --target-group-arn "$TARGET_GROUP_ARN" \
   --output table
 
 # STEP 20: APIの接続先を設定する
+PREVIOUS_API_URL="$API_URL"
+save_settings PREVIOUS_API_URL
 API_URL="http://$ALB_DNS/api"
 save_settings_to ~/aws-ecs-11/settings.local.sh API_URL
 printf '%s\n' "$API_URL" > .generated/api-url.txt
@@ -218,27 +217,14 @@ printf '\n'
 curl --fail --show-error --silent --retry 5 --retry-all-errors --retry-delay 3 \
   --connect-timeout 10 --max-time 30 "$API_URL" | jq .
 
-# STEP 23: サンプル項目を追加する
-aws dynamodb put-item --table-name "$DYNAMODB_TABLE" \
-  --item file://dynamodb-item.json --condition-expression 'attribute_not_exists(id)'
-
-# STEP 24: 登録した項目を参照する
-aws dynamodb get-item --table-name "$DYNAMODB_TABLE" \
-  --key '{"id":{"S":"AzureToAWS"}}' --consistent-read --output json
-
-# STEP 25: APIを2回呼び出してカウントを確認する
-curl --fail --show-error --silent --connect-timeout 10 --max-time 30 \
-  "$API_URL" > .generated/api-first.json
-curl --fail --show-error --silent --connect-timeout 10 --max-time 30 \
-  "$API_URL" > .generated/api-second.json
-jq '{source, title, message, accessCount}' .generated/api-first.json .generated/api-second.json
-jq -e -s '.[0].source == "DynamoDB" and .[1].source == "DynamoDB" and
-  (.[0].accessCount | type) == "number" and (.[1].accessCount | type) == "number" and
-  .[1].accessCount > .[0].accessCount' .generated/api-first.json .generated/api-second.json
+# DynamoDB sample data is added manually in the retained GUI section.
 
 # STEP 26: 配置済みJavaScriptを取得する
 aws s3api get-object --bucket "$S3_BUCKET" --key app.js \
   --expected-bucket-owner "$AWS_ACCOUNT_ID" .generated/app.before.js
+if [[ ! -f .generated/app.original.js ]]; then
+  cp .generated/app.before.js .generated/app.original.js
+fi
 
 # STEP 27: APIのURLを置き換える
 test "$(grep -Ec '^[[:space:]]*const API_URL[[:space:]]*=' .generated/app.before.js)" = 1
